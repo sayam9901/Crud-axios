@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRUD App</title>
+  <style>
+    /* Add your CSS styles here */
+    /* You can style the form, data table, buttons, etc. */
+  </style>
+</head>
+<body>
+  <h1>CRUD App</h1>
+  
+  <!-- Form to add new data -->
+  <form id="data-form">
+    <input type="text" id="name" placeholder="Name">
+    <input type="email" id="email" placeholder="Email">
+    <button type="submit">Add</button>
+  </form>
+
+  <!-- Form to update data -->
+  <form id="update-form" style="display: none;">
+    <input type="text" id="update-name" placeholder="Updated Name">
+    <input type="email" id="update-email" placeholder="Updated Email">
+    <input type="hidden" id="data-id">
+    <button type="submit">Update Data</button>
+  </form>
+
+  <!-- Table to display data -->
+  <table id="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Data will be displayed here -->
+    </tbody>
+  </table>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    const apiUrl = 'https://crudcrud.com/api/dc1eb50df3964e1da157392d90db93d4/appointment';
+    const dataForm = document.getElementById('data-form');
+    const updateForm = document.getElementById('update-form');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const updateNameInput = document.getElementById('update-name');
+    const updateEmailInput = document.getElementById('update-email');
+    const dataTable = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+
+    // Function to fetch and display data
+    function fetchData() {
+      axios.get(apiUrl)
+        .then(response => {
+          const data = response.data;
+          dataTable.innerHTML = '';
+
+          data.forEach(item => {
+            const row = dataTable.insertRow();
+            const nameCell = row.insertCell(0);
+            const emailCell = row.insertCell(1);
+            const actionsCell = row.insertCell(2);
+
+            nameCell.innerHTML = item.name;
+            emailCell.innerHTML = item.email;
+
+            // Add buttons for update and delete
+            actionsCell.innerHTML = `
+              <button onclick="updateData('${item._id}', '${item.name}', '${item.email}')">Update</button>
+              <button onclick="deleteData('${item._id}')">Delete</button>
+            `;
+          });
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
+
+    // Function to add new data
+    dataForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const name = nameInput.value;
+      const email = emailInput.value;
+
+      if (name && email) {
+        axios.post(apiUrl, { name, email })
+          .then(() => {
+            nameInput.value = '';
+            emailInput.value = '';
+            fetchData();
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
+    });
+
+    // Function to delete data
+    function deleteData(id) {
+      axios.delete(`${apiUrl}/${id}`)
+        .then(() => {
+          fetchData();
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
+
+    // Function to pre-fill the update form
+    function updateData(id, name, email) {
+      updateNameInput.value = name;
+      updateEmailInput.value = email;
+      document.getElementById('data-id').value = id;
+
+      // Show the update form
+      updateForm.style.display = 'block';
+      dataForm.style.display = 'none';
+    }
+
+    // Event listener for update form submission
+    updateForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const newName = updateNameInput.value;
+      const newEmail = updateEmailInput.value;
+      const dataId = document.getElementById('data-id').value;
+
+      if (newName && newEmail) {
+        axios.put(`${apiUrl}/${dataId}`, { name: newName, email: newEmail })
+          .then(() => {
+            updateNameInput.value = '';
+            updateEmailInput.value = '';
+            document.getElementById('data-id').value = '';
+            updateForm.style.display = 'none';
+            dataForm.style.display = 'block';
+            fetchData();
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
+    });
+
+    // Initial data fetch
+    fetchData();
+  </script>
+</body>
+</html>
